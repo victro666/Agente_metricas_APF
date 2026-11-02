@@ -1,0 +1,39 @@
+# Definições, Intenções Primárias e Regras de Contagem (Baseado no CPM IFPUG 4.3.1)
+
+## 1. Funções de Transação (Processos Elementares)
+
+* **Processo Elementar (PE):** Menor unidade de atividade significativa para o usuário[cite: 40]. Para ser um PE único, deve constituir uma transação completa, ser autocontido (nenhum passo anterior ou subsequente é necessário para iniciar ou concluir os requisitos) e deixar o negócio da aplicação contada em um estado consistente[cite: 36, 38, 40].
+* **Entrada Externa (EE):** Processo elementar que processa dados ou informações de controle enviados de fora da fronteira[cite: 38].
+  * **Intenção Primária:** Manter um ou mais ALIs e/ou alterar o comportamento do sistema[cite: 72].
+  * **Regras de Lógica:** É obrigatório aceitar dados ou informações de controle que entram pela fronteira, bem como atualizar pelo menos um ALI OU alterar o comportamento do sistema[cite: 52].
+* **Saída Externa (SE):** Processo elementar que envia dados ou informações de controle para fora da fronteira da aplicação e inclui processamento adicional além daquele de uma consulta externa[cite: 41].
+  * **Intenção Primária:** Apresentar informações ao usuário através de lógica de processamento que contenha fórmulas matemáticas ou cálculos, crie dados derivados, mantenha ALIs e/ou altere o comportamento do sistema[cite: 41, 72].
+  * **Regras de Lógica:** É obrigatório preparar e apresentar informações para fora da fronteira, além de executar pelo menos uma ação de cálculo matemático, atualização de ALI, criação de dados derivados ou alteração de comportamento[cite: 52].
+* **Consulta Externa (CE):** Processo elementar que envia dados ou informações de controle para fora da fronteira[cite: 37].
+  * **Intenção Primária:** Apresentar informações ao usuário através da recuperação simples de dados ou informações de controle[cite: 72].
+  * **Regras de Lógica:** É obrigatório referenciar pelo menos um ALI/AIE, recuperar dados/informações de controle e apresentar informações para fora da fronteira[cite: 52]. É proibido conter cálculos matemáticos, atualizar ALIs, criar dados derivados ou alterar o comportamento do sistema[cite: 52].
+
+## 2. Funções de Dados
+
+* **Arquivo Lógico Interno (ALI):** Grupo de dados ou informações de controle logicamente relacionados, reconhecido pelo usuário, mantido dentro da fronteira da aplicação medida[cite: 36]. A intenção primária é armazenar dados mantidos através de um ou mais processos elementares da aplicação[cite: 71].
+* **Arquivo de Interface Externa (AIE):** Grupo de dados ou informações de controle logicamente relacionados, reconhecido pelo usuário, referenciado pela aplicação medida, porém mantido dentro da fronteira de outra aplicação[cite: 36]. A intenção primária é armazenar dados referenciados por um ou mais processos elementares[cite: 71].
+
+## 3. Formas de Lógica de Processamento (IFPUG - CPM)
+Um processo elementar pode executar as seguintes ações lógicas durante sua execução[cite: 50, 51]:
+1. Validações são executadas[cite: 50].
+2. Fórmulas matemáticas e cálculos são executados[cite: 50].
+3. Valores equivalentes são convertidos[cite: 50].
+4. Dados são filtrados e selecionados através de critérios especificados[cite: 50].
+5. Condições são analisadas para determinar quais são aplicáveis[cite: 50].
+6. Um ou mais ALIs são atualizados[cite: 50].
+7. Um ou mais ALIs ou AIEs são referenciados[cite: 50].
+8. Dados ou informações de controle são recuperados[cite: 50].
+9. Dados derivados são criados através de transformação[cite: 51].
+10. O comportamento da aplicação é alterado[cite: 51].
+11. Preparar e apresentar informações fora da fronteira[cite: 51].
+12. Receber dados ou informações de controle que entram pela fronteira[cite: 51].
+13. Classificar ou arrumar um conjunto de dados (esta forma de lógica não impacta a unicidade ou o tipo do processo elementar)[cite: 51].
+
+## 4. Unicidade e Regras de Decisão
+* **Processos Elementares Únicos:** Dois processos são considerados o mesmo Processo Elementar se requerem o mesmo conjunto de DERs, o mesmo conjunto de ALRs e a mesma lógica de processamento[cite: 49]. Pequenas variações não dividem um PE em dois, a menos que sejam explicitamente requeridas como funções distintas pelo usuário[cite: 49, 116].
+* **Exclusão de Requisitos Não Funcionais:** Requisitos não funcionais (como restrições de usabilidade, tempos de resposta, registros de logs técnicos de auditoria, criptografia, tratamento genérico de erros e cookies) influenciam a arquitetura, mas **não** são medidos como funções de transação (EE, SE, CE) nem como funções de dados (ALI, AIE) na Análise de Pontos de Função, pois pertencem à dimensão não funcional do software[cite: 41, 148].
