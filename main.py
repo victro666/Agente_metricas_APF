@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse
 from pypdf import PdfReader
 from dotenv import load_dotenv
 
@@ -29,8 +30,8 @@ app = FastAPI(
 )
 
 @app.get("/")
-def redirecionar_para_docs():
-    return RedirectResponse(url="/docs")
+def pagina_inicial():
+    return FileResponse("index.html")
 
 # Permite que seu Frontend (Flutter Web, Streamlit ou React) consuma a API sem bloqueio de CORS
 app.add_middleware(
