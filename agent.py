@@ -128,12 +128,14 @@ class CopilotoAPFAgent:
         self.llm_fast = ChatGroq(
             api_key=groq_api_key,
             model_name="qwen/qwen3.8-27b", 
-            temperature=0
+            temperature=0,
+            max_tokens=900
         )
         self.llm_extractor = ChatGroq(
             api_key=groq_api_key,
             model_name="qwen/qwen3.8-27b",
-            temperature=0
+            temperature=0,
+            max_tokens=900
         )
 
         nltk.download('punkt', quiet=True) 
