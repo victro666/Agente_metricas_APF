@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from dotenv import load_dotenv
 from langchain_community.document_loaders import TextLoader
 from langchain_community.vectorstores import Chroma
@@ -25,13 +26,24 @@ def construir_banco_local():
 
     embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
     
-    Chroma.from_documents(
-        documents=splits_regras,
-        embedding=embeddings,
+    db = Chroma(
         persist_directory=CHROMA_PATH,
+        embedding_function=embeddings,
         collection_name="cpm_ifpug_rules"
     )
-    print("✅ Novo 'chroma_db/' gerado via Google Embeddings! Faça o commit desta pasta.")
+
+    # Envia os documentos em lotes de 80 para não estourar os 100 RPM
+    tamanho_lote = 80
+    for i in range(0, len(splits_regras), tamanho_lote):
+        lote = splits_regras[i : i + tamanho_lote]
+        print(f"Vetorizando lote {i} até {i + len(lote)} de {len(splits_regras)}...")
+        db.add_documents(lote)
+        
+        if i + tamanho_lote < len(splits_regras):
+            print("Aguardando 60 segundos para respeitar a cota gratuita do Google...")
+            time.sleep(60)
+            
+    print("✅ Novo 'chroma_db/' gerado com sucesso! Faça o commit desta pasta.")
 
 if __name__ == "__main__":
     construir_banco_local()

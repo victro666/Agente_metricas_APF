@@ -1,13 +1,15 @@
 import os
 import re
+import nltk
 from typing import List, Optional
 from langchain_groq import ChatGroq
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_experimental.text_splitter import SemanticChunker
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter, NLTKTextSplitter
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 
 from schemas import (
     DecisaoAgente,
@@ -125,7 +127,7 @@ class CopilotoAPFAgent:
 
         self.llm_fast = ChatGroq(
             api_key=groq_api_key,
-            model_name="openai/gpt-oss-20b", 
+            model_name="qwen/qwen3.8-27b", 
             temperature=0
         )
         self.llm_extractor = ChatGroq(
@@ -134,8 +136,15 @@ class CopilotoAPFAgent:
             temperature=0
         )
 
+        nltk.download('punkt', quiet=True) 
+        self.text_splitter = NLTKTextSplitter(chunk_size=1500, chunk_overlap=200)
+
         # Consome 0MB de RAM do Render
-        self.embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+        self.embeddings = HuggingFaceInferenceAPIEmbeddings(
+            api_key=os.environ.get("HF_TOKEN"), 
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+
         self.vectorstore = Chroma(
             persist_directory=CHROMA_PATH,
             embedding_function=self.embeddings,
@@ -143,12 +152,10 @@ class CopilotoAPFAgent:
         )
         self.retriever_cpm = self.vectorstore.as_retriever(search_kwargs={"k": 3})
 
-        self.semantic_chunker = SemanticChunker(
-            self.embeddings,
-            breakpoint_threshold_type="percentile",
-            breakpoint_threshold_amount=80
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=2000, 
+            chunk_overlap=200
         )
-        self.fallback_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
 
         self.parser_decisao = PydanticOutputParser(pydantic_object=DecisaoAgente)
         self.parser_extracao = PydanticOutputParser(pydantic_object=ListaExtracao)
