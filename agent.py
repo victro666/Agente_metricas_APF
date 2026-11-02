@@ -153,7 +153,7 @@ class CopilotoAPFAgent:
         # Modelo rápido (8B) para Triagem e Sumarização
         self.llm_fast = ChatGroq(
             api_key=groq_api_key,
-            model_name="llama-3.1-8b-instant",
+            model_name="llama3-8b-8192",
             temperature=0
         )
         # Modelo forte (70B) para Extração Estruturada FPA
