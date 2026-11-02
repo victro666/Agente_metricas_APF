@@ -152,11 +152,6 @@ class CopilotoAPFAgent:
         )
         self.retriever_cpm = self.vectorstore.as_retriever(search_kwargs={"k": 3})
 
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=2000, 
-            chunk_overlap=200
-        )
-
         self.parser_decisao = PydanticOutputParser(pydantic_object=DecisaoAgente)
         self.parser_extracao = PydanticOutputParser(pydantic_object=ListaExtracao)
 
