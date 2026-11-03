@@ -252,14 +252,27 @@ class CopilotoAPFAgent:
                 print(f"❌ ERRO CRÍTICO NO BLOCO {i}: {e}") 
                 continue
 
-        mapa_unicos = {}
-        for item in extraidos_brutos:
-            mapa_unicos[(self._normalizar_chave_unicidade(item.nome_cfb), item.tipo)] = item
+        #mapa_unicos = {}
+        #for item in extraidos_brutos:
+        #    mapa_unicos[(self._normalizar_chave_unicidade(item.nome_cfb), item.tipo)] = item
 
         componentes_finais = list(mapa_unicos.values())
         resumo_tipos = {"EE": 0, "SE": 0, "CE": 0, "ALI": 0, "AIE": 0}
         for item in componentes_finais:
             resumo_tipos[item.tipo] = resumo_tipos.get(item.tipo, 0) + 1
+
+        mapa_unicos = {}
+        for item in extraidos_brutos:
+            chave_nome = self._normalizar_chave_unicidade(item.nome_cfb)
+            
+            if item.tipo in ["ALI", "AIE"]:
+                # Regra IFPUG: Se é mantido (ALI) em algum lugar, sobrepõe qualquer referência (AIE)
+                if item.tipo == "AIE" and (chave_nome, "ALI") in mapa_unicos:
+                    continue
+                if item.tipo == "ALI" and (chave_nome, "AIE") in mapa_unicos:
+                    del mapa_unicos[(chave_nome, "AIE")]
+            
+            mapa_unicos[(chave_nome, item.tipo)] = item
 
         return RelatorioContagemResponse(
             nome_projeto=nome_projeto, contexto_global_extraido=contexto_global,
