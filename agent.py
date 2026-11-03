@@ -257,15 +257,9 @@ class CopilotoAPFAgent:
         #    mapa_unicos[(self._normalizar_chave_unicidade(item.nome_cfb), item.tipo)] = item
 
         mapa_unicos = {}
-        
-        componentes_finais = list(mapa_unicos.values())
-        resumo_tipos = {"EE": 0, "SE": 0, "CE": 0, "ALI": 0, "AIE": 0}
-        for item in componentes_finais:
-            resumo_tipos[item.tipo] = resumo_tipos.get(item.tipo, 0) + 1
-
-        
         for item in extraidos_brutos:
-            chave_nome = self._normalizar_chave_unicidade(item.nome_cfb)
+            # Fazemos a normalização direto na string, evitando o erro de atributo
+            chave_nome = str(item.nome_cfb).strip().lower()
             
             if item.tipo in ["ALI", "AIE"]:
                 # Regra IFPUG: Se é mantido (ALI) em algum lugar, sobrepõe qualquer referência (AIE)
@@ -275,6 +269,14 @@ class CopilotoAPFAgent:
                     del mapa_unicos[(chave_nome, "AIE")]
             
             mapa_unicos[(chave_nome, item.tipo)] = item
+            
+        componentes_finais = list(mapa_unicos.values())
+
+        componentes_finais = list(mapa_unicos.values())
+        resumo_tipos = {"EE": 0, "SE": 0, "CE": 0, "ALI": 0, "AIE": 0}
+        for item in componentes_finais:
+            resumo_tipos[item.tipo] = resumo_tipos.get(item.tipo, 0) + 1
+
 
         return RelatorioContagemResponse(
             nome_projeto=nome_projeto, contexto_global_extraido=contexto_global,
