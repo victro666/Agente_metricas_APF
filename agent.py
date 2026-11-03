@@ -131,13 +131,11 @@ class CopilotoAPFAgent:
         self.llm_fast = ChatGoogleGenerativeAI(
             api_key=google_api_key,
             model="gemini-3.5-flash-lite", 
-            temperature=0,
             max_tokens=2048 # O Gemini suporta saídas maiores
         )
         self.llm_extractor = ChatGoogleGenerativeAI(
             api_key=google_api_key,
             model="gemini-3.5-flash-lite",
-            temperature=0,
             max_tokens=2048
         )
 
@@ -145,9 +143,9 @@ class CopilotoAPFAgent:
         self.text_splitter = NLTKTextSplitter(chunk_size=1500, chunk_overlap=200)
 
         # Consome 0MB de RAM do Render
-        self.embeddings = HuggingFaceInferenceAPIEmbeddings(
-            api_key=os.environ.get("HF_TOKEN"), 
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        self.embeddings = GoogleGenerativeAIEmbeddings(
+            google_api_key=google_api_key,
+            model="gemini-embedding-2"
         )
 
         self.vectorstore = Chroma(
@@ -165,6 +163,13 @@ class CopilotoAPFAgent:
         padrao = re.search(r'\{.*\}', texto, re.DOTALL)
         return padrao.group(0) if padrao else texto
 
+    @staticmethod
+    def _obter_texto_seguro(conteudo) -> str:
+        """Garante que a resposta do LLM seja sempre convertida para string."""
+        if isinstance(conteudo, list):
+            return " ".join([c.get("text", "") if isinstance(c, dict) else str(c) for c in conteudo])
+        return str(conteudo)
+
     def fatiar_documento_semanticamente(self, texto_bruto: str) -> List[str]:
         texto_limpo = re.sub(r'\s+', ' ', texto_bruto).strip()
         
@@ -177,7 +182,8 @@ class CopilotoAPFAgent:
 
     def gerar_contexto_global(self, texto_completo: str) -> str:
         prompt = f"Resuma em até 4 linhas:\n1. Objetivo.\n2. Atores.\n3. Entidades.\n\n[Documento]:\n{texto_completo[:6000]}"
-        return self.llm_fast.invoke(prompt).content.strip()
+        resposta_bruta = self.llm_fast.invoke(prompt).content
+        return self._obter_texto_seguro(resposta_bruta).strip()
 
     def _analisar_bloco(self, trecho_req: str, contexto_global: str) -> Optional[ListaExtracao]:
         _prompt_1 = prompt_decisao.format_messages(
@@ -187,10 +193,10 @@ class CopilotoAPFAgent:
         )
 
         try:
-            resp_1 = self.llm_fast.invoke(_prompt_1).content
+            raw_1 = self.llm_fast.invoke(_prompt_1).content
+            resp_1 = self._obter_texto_seguro(raw_1)
             decisao: DecisaoAgente = self.parser_decisao.parse(self._limpar_json(resp_1))
-            # Mostra no painel do Render o que o modelo decidiu
-            print(f"Triagem do Bloco: Funcional={decisao.possui_requisito_funcional} | Motivo: {decisao.raciocinio_triagem}")
+            print(f"🧐 Triagem do Bloco: Funcional={decisao.possui_requisito_funcional} | Motivo: {decisao.raciocinio_triagem}")
         except Exception as e:
             print(f"Erro no parser de triagem: {e}")
             decisao = DecisaoAgente(
@@ -213,7 +219,8 @@ class CopilotoAPFAgent:
             requisito=trecho_req
         )
 
-        resp_2 = self.llm_extractor.invoke(_prompt_2).content
+        raw_2 = self.llm_extractor.invoke(_prompt_2).content
+        resp_2 = self._obter_texto_seguro(raw_2)
         return self.parser_extracao.parse(self._limpar_json(resp_2))
 
     @staticmethod
