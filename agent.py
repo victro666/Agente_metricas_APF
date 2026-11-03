@@ -164,14 +164,13 @@ class CopilotoAPFAgent:
 
     def fatiar_documento_semanticamente(self, texto_bruto: str) -> List[str]:
         texto_limpo = re.sub(r'\s+', ' ', texto_bruto).strip()
-        docs_semanticos = self.semantic_chunker.create_documents([texto_limpo])
-        blocos_finais = []
-        for doc in docs_semanticos:
-            if len(doc.page_content) > 2400:
-                blocos_finais.extend(self.fallback_splitter.split_text(doc.page_content))
-            elif len(doc.page_content.strip()) > 40:
-                blocos_finais.append(doc.page_content.strip())
-        return blocos_finais
+        
+        # Ignora textos curtos demais
+        if len(texto_limpo) < 40:
+            return []
+            
+        # Realiza o corte seguro preservando as frases com o NLTK
+        return self.text_splitter.split_text(texto_limpo)
 
     def gerar_contexto_global(self, texto_completo: str) -> str:
         prompt = f"Resuma em até 4 linhas:\n1. Objetivo.\n2. Atores.\n3. Entidades.\n\n[Documento]:\n{texto_completo[:6000]}"
