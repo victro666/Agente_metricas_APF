@@ -1,6 +1,7 @@
 import os
 import re
 import nltk
+import time
 from typing import List, Optional
 from langchain_groq import ChatGroq
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -223,10 +224,13 @@ class CopilotoAPFAgent:
         extraidos_brutos = []
         for i, texto_bloco in enumerate(blocos):
             try:
+                if i > 0:
+                    time.sleep(8) # Pausa para esfriar a cota OTPM da Groq
+                
                 resultado = self._analisar_bloco(texto_bloco, contexto_global)
                 if resultado and resultado.componentes:
                     for cfb in resultado.componentes:
-                        pf = PESOS_NESMA_ESTIMATIVA.get(cfb.classificacao, 0)
+                        pf = PESOS_NESMA_ESTIMATIVA.get(cfb.classificacao, 0) #[cite: 2]
                         extraidos_brutos.append(
                             ItemContagemOutput(
                                 id_trecho=i, nome_cfb=cfb.nome_processo.strip(), tipo=cfb.classificacao,
@@ -234,7 +238,9 @@ class CopilotoAPFAgent:
                                 trecho_referencia=cfb.trecho_referencia
                             )
                         )
-            except Exception:
+            except Exception as e:
+                # Remove a falha silenciosa para vermos o que quebrou
+                print(f"❌ ERRO CRÍTICO NO BLOCO {i}: {e}") 
                 continue
 
         mapa_unicos = {}
