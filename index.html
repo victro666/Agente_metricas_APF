@@ -3,179 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copiloto de Métricas APF</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; max-width: 1000px; margin: 0 auto; padding: 20px; }
-        h1 { color: #2c3e50; text-align: center; }
-        .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        
-        /* Abas */
-        .tabs { display: flex; margin-bottom: 15px; border-radius: 4px; overflow: hidden; }
-        .tab-btn { flex: 1; padding: 12px; background: #e9ecef; border: none; cursor: pointer; font-weight: bold; color: #495057; transition: background 0.2s; }
-        .tab-btn:hover { background: #dde2e6; }
-        .tab-btn.active { background: #3498db; color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        /* Formulários */
-        textarea { width: 100%; height: 120px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; margin-bottom: 10px; box-sizing: border-box; }
-        input[type="file"] { margin-bottom: 10px; font-size: 15px; }
-        button.submit-btn { background: #27ae60; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
-        button.submit-btn:hover { background: #2ecc71; }
-        #loading { display: none; text-align: center; font-weight: bold; color: #f39c12; margin-top: 15px; }
-        
-        /* Resumo e Tabela */
-        .summary-box { background: #f8f9fa; border-left: 5px solid #3498db; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
-        .summary-box p { margin: 5px 0; }
-        .highlight-pf { color: #27ae60; font-size: 1.3em; font-weight: bold; }
-        
-        .table-responsive { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #2c3e50; color: white; white-space: nowrap; }
-        tr:hover { background-color: #f1f2f6; }
-        
-        /* Badges para as classificações */
-        .badge { padding: 5px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; color: white; display: inline-block; text-align: center; min-width: 35px; }
-        .badge.EE { background-color: #3498db; }
-        .badge.SE { background-color: #9b59b6; }
-        .badge.CE { background-color: #f39c12; }
-        .badge.ALI { background-color: #e74c3c; }
-        .badge.AIE { background-color: #7f8c8d; }
-    </style>
+    <title>Copiloto APF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-
-    <h1>Copiloto de Métricas APF (IFPUG)</h1>
-
-    <div class="card">
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('texto')">Analisar Texto</button>
-            <button class="tab-btn" onclick="switchTab('arquivo')">Upload de Arquivo (PDF/TXT)</button>
+<body class="bg-gray-50 text-gray-800 p-8">
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-600">Copiloto de Métricas APF</h1>
+        
+        <!-- Formulário de Envio -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Envie o documento de requisitos (.txt ou .pdf)</label>
+            <input type="file" id="arquivo" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4" />
+            <button id="btnEnviar" class="bg-blue-600 text-white px-6 py-2 rounded font-medium hover:bg-blue-700 transition duration-150">Analisar Arquivo</button>
+            <p id="status" class="mt-4 text-sm text-blue-600 font-semibold hidden animate-pulse">Processando blocos de texto... Isso pode levar alguns minutos devido às pausas da API.</p>
         </div>
 
-        <div id="texto" class="tab-content active">
-            <textarea id="req-texto" placeholder="Cole aqui os requisitos do sistema..."></textarea>
-            <button class="submit-btn" onclick="analisarTexto()">Extrair Processos via Texto</button>
+        <!-- Painel de Resultados -->
+        <div id="resultados" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tamanho Funcional</h3>
+                    <p class="text-4xl font-black text-blue-600 mt-2" id="res-total-pf">0 PF</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500 md:col-span-2">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Contexto Global Extraído</h3>
+                    <p class="text-sm mt-2 text-gray-700 leading-relaxed" id="res-contexto"></p>
+                </div>
+            </div>
+
+            <!-- Tabela de Componentes -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nome do CFB</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tipo</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">PFs</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/2">Raciocínio CPM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo" class="bg-white divide-y divide-gray-200 text-sm">
+                        <!-- As linhas serão injetadas via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-        <div id="arquivo" class="tab-content">
-            <input type="file" id="req-arquivo" accept=".pdf,.txt">
-            <button class="submit-btn" onclick="analisarArquivo()">Extrair Processos via Arquivo</button>
-        </div>
-
-        <div id="loading">⏳ Analisando com o Qwen3.8... Isso pode levar alguns minutos..</div>
-    </div>
-
-    <!-- Onde o resultado será injetado pelo JavaScript -->
-    <div class="card" id="resultado-card" style="display: none;">
-        <div id="resultado-conteudo"></div>
     </div>
 
     <script>
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        async function analisarTexto() {
-            const texto = document.getElementById('req-texto').value;
-            if (texto.length < 20) return alert("Insira pelo menos 20 caracteres.");
+        document.getElementById('btnEnviar').addEventListener('click', async () => {
+            const fileInput = document.getElementById('arquivo');
+            const btn = document.getElementById('btnEnviar');
+            const status = document.getElementById('status');
+            const resultados = document.getElementById('resultados');
             
-            showLoading(true);
-            try {
-                const response = await fetch('/api/v1/extrair-texto', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nome_projeto: "Projeto_Web", texto_requisitos: texto })
-                });
-                const data = await response.json();
-                exibirResultadoFormatado(data);
-            } catch (error) { alert("Erro na requisição. Verifique os logs da API."); }
-            showLoading(false);
-        }
+            if (!fileInput.files[0]) {
+                alert('Selecione um arquivo de requisitos primeiro.');
+                return;
+            }
 
-        async function analisarArquivo() {
-            const arquivoInput = document.getElementById('req-arquivo');
-            if (arquivoInput.files.length === 0) return alert("Selecione um arquivo.");
+            // Prepara a interface para o carregamento
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            status.classList.remove('hidden');
+            resultados.classList.add('hidden');
 
             const formData = new FormData();
-            formData.append("arquivo", arquivoInput.files[0]);
+            formData.append('arquivo', fileInput.files[0]);
 
-            showLoading(true);
             try {
+                // Faz a requisição ao backend FastAPI
                 const response = await fetch('/api/v1/extrair-arquivo', {
                     method: 'POST',
                     body: formData
                 });
-                const data = await response.json();
-                exibirResultadoFormatado(data);
-            } catch (error) { alert("Erro ao enviar arquivo."); }
-            showLoading(false);
-        }
-
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
-            document.getElementById('resultado-card').style.display = 'none';
-        }
-
-        function exibirResultadoFormatado(data) {
-            // Monta o painel de resumo
-            let html = `
-                <div class="summary-box">
-                    <p><strong>Projeto Analisado:</strong> ${data.nome_projeto}</p>
-                    <p><strong>Contexto Extraído pela IA:</strong> ${data.contexto_global_extraido}</p>
-                    <p><strong>Tamanho Funcional Estimado:</strong> <span class="highlight-pf">${data.tamanho_funcional_total_pf} PF</span> (NESMA)</p>
-                </div>
-                <h3>Componentes Funcionais Básicos (CFB)</h3>
-            `;
-
-            if (data.componentes && data.componentes.length > 0) {
-                // Monta a Tabela
-                html += `
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Processo / Dado</th>
-                                    <th>Tipo</th>
-                                    <th>PF</th>
-                                    <th>Referência no Requisito</th>
-                                    <th>Raciocínio IFPUG CPM</th>
-                                    <th>Confiança</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
                 
-                // Popula as linhas
-                data.componentes.forEach(cfb => {
-                    html += `
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.detail || 'Erro ao comunicar com a API.');
+
+                // Preenche os cards superiores
+                document.getElementById('res-total-pf').textContent = data.tamanho_funcional_total_pf + ' PF';
+                document.getElementById('res-contexto').textContent = data.contexto_global_extraido;
+                
+                // Preenche a tabela de CFBs
+                const tbody = document.getElementById('tabela-corpo');
+                tbody.innerHTML = '';
+                
+                if (data.componentes && data.componentes.length > 0) {
+                    data.componentes.forEach(cfb => {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 font-bold text-gray-900">${cfb.nome_cfb}</td>
+                                <td class="px-6 py-4"><span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800">${cfb.tipo}</span></td>
+                                <td class="px-6 py-4 font-bold text-gray-700">${cfb.pf_nesma}</td>
+                                <td class="px-6 py-4 text-xs text-gray-600">${cfb.raciocinio_cpm}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = `
                         <tr>
-                            <td><strong>${cfb.nome_cfb}</strong></td>
-                            <td><span class="badge ${cfb.tipo}">${cfb.tipo}</span></td>
-                            <td><strong>${cfb.pf_nesma}</strong></td>
-                            <td><em>"${cfb.trecho_referencia}"</em></td>
-                            <td>${cfb.raciocinio_cpm}</td>
-                            <td>${cfb.confianca}</td>
-                        </tr>
-                    `;
-                });
-
-                html += `
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            } else {
-                html += `<p style="color: #e74c3c;">Nenhum Componente Funcional Básico foi identificado nestes requisitos.</p>`;
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                <span class="block font-bold mb-1">Nenhum componente funcional extraído.</span>
+                                O arquivo possui apenas requisitos não funcionais ou a Groq bloqueou a requisição por excesso de tokens.
+                            </td>
+                        </tr>`;
+                }
+                
+                resultados.classList.remove('hidden');
+            } catch (error) {
+                alert('Erro durante a extração: ' + error.message);
+            } finally {
+                // Restaura a interface
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                status.classList.add('hidden');
             }
-
-            document.getElementById('resultado-conteudo').innerHTML = html;
-            document.getElementById('resultado-card').style.display = 'block';
-        }
+        });
     </script>
 </body>
 </html>

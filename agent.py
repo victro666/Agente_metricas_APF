@@ -228,7 +228,7 @@ class CopilotoAPFAgent:
         for i, texto_bloco in enumerate(blocos):
             try:
                 if i > 0:
-                    time.sleep(8) # Pausa para esfriar a cota OTPM da Groq
+                    time.sleep(60) # Pausa para esfriar a cota OTPM da Groq
                 
                 resultado = self._analisar_bloco(texto_bloco, contexto_global)
                 if resultado and resultado.componentes:
