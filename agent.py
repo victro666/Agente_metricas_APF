@@ -195,8 +195,8 @@ class CopilotoAPFAgent:
                 raciocinio_triagem="Fallback", possui_requisito_funcional=True, precisa_consultar_manual=False
             )
 
-        if not decisao.possui_requisito_funcional:
-            return None
+        #if not decisao.possui_requisito_funcional:
+        #    return None
 
         regras_recuperadas = "Regras padrão CPM."
         if decisao.precisa_consultar_manual and decisao.query_busca_manual:
