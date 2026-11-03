@@ -3,7 +3,8 @@ import re
 import nltk
 import time
 from typing import List, Optional
-from langchain_groq import ChatGroq
+#from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_experimental.text_splitter import SemanticChunker
@@ -123,20 +124,21 @@ class CopilotoAPFAgent:
         groq_api_key = os.environ.get("GROQ_API_KEY")
         google_api_key = os.environ.get("GOOGLE_API_KEY")
         
-        if not groq_api_key or not google_api_key:
-            raise RuntimeError("As variáveis GROQ_API_KEY e GOOGLE_API_KEY são obrigatórias.")
+        if not google_api_key:
+            raise RuntimeError("A variável GOOGLE_API_KEY é obrigatória.")
 
-        self.llm_fast = ChatGroq(
-            api_key=groq_api_key,
-            model_name="qwen/qwen3.8-27b", 
+        # Substitui a Groq pelo Gemini 1.5 Flash (Plano gratuito massivo)
+        self.llm_fast = ChatGoogleGenerativeAI(
+            api_key=google_api_key,
+            model="gemini-1.5-flash", 
             temperature=0,
-            max_tokens=900
+            max_tokens=2048 # O Gemini suporta saídas maiores
         )
-        self.llm_extractor = ChatGroq(
-            api_key=groq_api_key,
-            model_name="qwen/qwen3.8-27b",
+        self.llm_extractor = ChatGoogleGenerativeAI(
+            api_key=google_api_key,
+            model="gemini-1.5-flash",
             temperature=0,
-            max_tokens=900
+            max_tokens=2048
         )
 
         nltk.download('punkt', quiet=True) 
@@ -227,9 +229,6 @@ class CopilotoAPFAgent:
         extraidos_brutos = []
         for i, texto_bloco in enumerate(blocos):
             try:
-                if i > 0:
-                    time.sleep(60) # Pausa para esfriar a cota OTPM da Groq
-                
                 resultado = self._analisar_bloco(texto_bloco, contexto_global)
                 if resultado and resultado.componentes:
                     for cfb in resultado.componentes:
