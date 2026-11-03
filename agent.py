@@ -187,7 +187,10 @@ class CopilotoAPFAgent:
         try:
             resp_1 = self.llm_fast.invoke(_prompt_1).content
             decisao: DecisaoAgente = self.parser_decisao.parse(self._limpar_json(resp_1))
-        except Exception:
+            # Mostra no painel do Render o que o modelo decidiu
+            print(f"Triagem do Bloco: Funcional={decisao.possui_requisito_funcional} | Motivo: {decisao.raciocinio_triagem}")
+        except Exception as e:
+            print(f"Erro no parser de triagem: {e}")
             decisao = DecisaoAgente(
                 raciocinio_triagem="Fallback", possui_requisito_funcional=True, precisa_consultar_manual=False
             )
