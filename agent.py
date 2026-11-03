@@ -130,13 +130,13 @@ class CopilotoAPFAgent:
         # Substitui a Groq pelo Gemini 1.5 Flash (Plano gratuito massivo)
         self.llm_fast = ChatGoogleGenerativeAI(
             api_key=google_api_key,
-            model="gemini-1.5-flash-latest", 
+            model="gemini-3.5-flash-lite", 
             temperature=0,
             max_tokens=2048 # O Gemini suporta saídas maiores
         )
         self.llm_extractor = ChatGoogleGenerativeAI(
             api_key=google_api_key,
-            model="gemini-1.5-flash-latest",
+            model="gemini-3.5-flash-lite",
             temperature=0,
             max_tokens=2048
         )
