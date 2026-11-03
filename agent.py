@@ -256,12 +256,14 @@ class CopilotoAPFAgent:
         #for item in extraidos_brutos:
         #    mapa_unicos[(self._normalizar_chave_unicidade(item.nome_cfb), item.tipo)] = item
 
+        mapa_unicos = {}
+        
         componentes_finais = list(mapa_unicos.values())
         resumo_tipos = {"EE": 0, "SE": 0, "CE": 0, "ALI": 0, "AIE": 0}
         for item in componentes_finais:
             resumo_tipos[item.tipo] = resumo_tipos.get(item.tipo, 0) + 1
 
-        mapa_unicos = {}
+        
         for item in extraidos_brutos:
             chave_nome = self._normalizar_chave_unicidade(item.nome_cfb)
             
