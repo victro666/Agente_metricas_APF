@@ -1,6 +1,6 @@
 # Agente_Contagem_APF_Estimativa
 
-Este projeto se trata de uma extensão do meu TCC para estudo e aplicação prática voltado à exploração de **Agentic RAG (Retrieval-Augmented Generation)**, orquestração de Large Language Models (LLMs) e validação estrita de dados estruturados.
+Este projeto se trata de uma extensão do meu TCC para estudo e aplicação prática voltado à exploração de técnicas e abordagens como Agentic RAG (Retrieval-Augmented Generation), orquestração de Large Language Models (LLMs) e validação estrita de dados estruturados.
 
 O objetivo deste projeto é demonstrar, por meio de uma abordagem dentre várias, a viabilidade dos modelos de linguagem (LLMs) na execução de análises complexas de linguagem natural aplicadas à Engenharia de Software. O maior gargalo na Análise de Métricas de Software é a interpretação de documentos de requisitos despadronizados, ambíguos ou incompletos, fatores que impactam negativamente a precisão da medição e que podem impactar diretamente no faturamento. 
 
