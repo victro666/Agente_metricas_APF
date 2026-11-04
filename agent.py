@@ -181,7 +181,12 @@ class CopilotoAPFAgent:
         return self.text_splitter.split_text(texto_limpo)
 
     def gerar_contexto_global(self, texto_completo: str) -> str:
-        prompt = f"Resuma em até 4 linhas:\n1. Objetivo.\n2. Atores.\n3. Entidades.\n\n[Documento]:\n{texto_completo[:6000]}"
+        prompt = f"""Faça um resumo bem formatado utilizando quebras de linha. Estruture exatamente assim:
+        **1. Objetivo:** [Descreva o objetivo geral]
+        **2. Atores:** [Liste os atores separados por vírgula]
+        **3. Entidades:** [Liste as entidades de dados separadas por vírgula]
+
+        [Documento]:{texto_completo[:6000]}"""
         resposta_bruta = self.llm_fast.invoke(prompt).content
         return self._obter_texto_seguro(resposta_bruta).strip()
 

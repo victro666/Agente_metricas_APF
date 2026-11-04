@@ -1,9 +1,9 @@
 import io
+import json # Nova importação
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
-from fastapi.responses import FileResponse
+from fastapi.responses import RedirectResponse, FileResponse, Response # Adicionado Response
 from pypdf import PdfReader
 from dotenv import load_dotenv
 
@@ -16,14 +16,14 @@ estado_app = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 Inicializando Copiloto de Métricas APF (Groq + ChromaDB)...")
+    print("🚀 Inicializando Copiloto de Métricas APF (Google AI Studio + ChromaDB)...")
     estado_app["agente"] = CopilotoAPFAgent()
     print("✅ Agente pronto para receber requisições!")
     yield
     estado_app.clear()
 
 app = FastAPI(
-    title="Copiloto de Métricas APF API",
+    title="Agente Contagem Estimativa APF",
     description="API Agentic RAG para extração e classificação de CFBs (IFPUG CPM 4.3.1 / NESMA Estimativa).",
     version="1.0.0",
     lifespan=lifespan
@@ -33,7 +33,6 @@ app = FastAPI(
 def pagina_inicial():
     return FileResponse("index.html")
 
-# Permite que seu Frontend (Flutter Web, Streamlit ou React) consuma a API sem bloqueio de CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -44,7 +43,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health_check():
-    return {"status": "online", "motor": "Groq LPU (Llama 3.1 8B + 3.3 70B)", "rag": "ChromaDB Local"}
+    return {"status": "online", "motor": "Google Gemini 3.5 Flash-Lite", "rag": "ChromaDB Local"}
 
 @app.post("/api/v1/extrair-texto", response_model=RelatorioContagemResponse)
 def extrair_de_texto(payload: RequisitoTextoInput):
@@ -75,3 +74,13 @@ async def extrair_de_arquivo(arquivo: UploadFile = File(...)):
         raise HTTPException(status_code=422, detail="O documento enviado não possui texto legível suficiente.")
 
     return agente.processar_requisitos(nome_arquivo, texto_extraido)
+
+# --- NOVA ROTA DE EXPORTAÇÃO ---
+@app.post("/api/v1/exportar-json")
+def exportar_json(payload: RelatorioContagemResponse):
+    json_str = payload.model_dump_json(indent=4)
+    return Response(
+        content=json_str,
+        media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename=extracao_{payload.nome_projeto}.json"}
+    )

@@ -3,47 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copiloto APF</title>
+    <title>Agente Contagem Estimativa APF</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-800 p-8">
-    <div class="max-w-5xl mx-auto">
-        <h1 class="text-3xl font-bold mb-6 text-blue-600">Copiloto de Métricas APF</h1>
+<body class="bg-slate-100 text-gray-800 p-8 font-sans">
+    <div class="max-w-6xl mx-auto">
+        <!-- Título -->
+        <h1 class="text-3xl font-black mb-4 text-black">Agente Contagem Estimativa APF</h1>
         
-        <!-- Formulário de Envio -->
+        <!-- Aviso de Confidencialidade -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded shadow-sm">
+            <div class="flex">
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-800 font-medium">
+                        <strong>⚠️ Aviso de Privacidade:</strong> Este sistema utiliza modelos de Inteligência Artificial proprietários hospedados em nuvem pública (Google Gemini). Não há garantia absoluta de confidencialidade. <strong>Não envie</strong> documentos sigilosos, dados pessoais sensíveis (LGPD) ou especificações protegidas por Acordos de Confidencialidade (NDA).
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Painel de Entrada de Dados (Arquivo ou Texto) -->
         <div class="bg-white p-6 rounded-lg shadow mb-8">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Envie o documento de requisitos (.txt ou .pdf)</label>
-            <input type="file" id="arquivo" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4" />
-            <button id="btnEnviar" class="bg-blue-600 text-white px-6 py-2 rounded font-medium hover:bg-blue-700 transition duration-150">Analisar Arquivo</button>
-            <p id="status" class="mt-4 text-sm text-blue-600 font-semibold hidden animate-pulse">Processando blocos de texto... Isso pode levar alguns minutos devido às pausas da API.</p>
+            <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Fornecer Especificação de Requisitos</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Opção 1: Arquivo -->
+                <div class="border p-5 rounded-lg bg-gray-50">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Opção 1: Fazer Upload de Arquivo</label>
+                    <p class="text-xs text-gray-500 mb-3">Formatos suportados: .PDF, .TXT</p>
+                    <input type="file" id="arquivo" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4" />
+                    <button id="btnEnviarArquivo" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition w-full shadow">Analisar Arquivo</button>
+                </div>
+                
+                <!-- Opção 2: Texto -->
+                <div class="border p-5 rounded-lg bg-gray-50">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Opção 2: Colar Texto Direto</label>
+                    <p class="text-xs text-gray-500 mb-3">Cole trechos de histórias de usuário ou casos de uso</p>
+                    <textarea id="textoRequisito" rows="3" class="w-full border rounded p-2 text-sm mb-4 shadow-inner" placeholder="Cole aqui o texto da especificação..."></textarea>
+                    <button id="btnEnviarTexto" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition w-full shadow">Analisar Texto Bruto</button>
+                </div>
+            </div>
+            <p id="status" class="mt-4 text-sm text-blue-600 font-bold hidden animate-pulse text-center">Processando blocos de texto... Isso pode levar alguns minutos devido às pausas da API.</p>
         </div>
 
         <!-- Painel de Resultados -->
         <div id="resultados" class="hidden space-y-6">
+            <div class="flex justify-between items-center bg-white p-4 rounded-lg shadow">
+                <h2 class="text-xl font-bold text-gray-800">Resultado da Análise</h2>
+                <button id="btnExportarJson" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 transition shadow">📥 Exportar JSON</button>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-600 flex flex-col justify-center items-center">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tamanho Funcional</h3>
-                    <p class="text-4xl font-black text-blue-600 mt-2" id="res-total-pf">0 PF</p>
+                    <p class="text-5xl font-black text-blue-600 mt-2" id="res-total-pf">0 PF</p>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500 md:col-span-2">
+                <div class="bg-white p-6 rounded-lg shadow border-l-4 border-gray-800 md:col-span-2">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Contexto Global Extraído</h3>
-                    <p class="text-sm mt-2 text-gray-700 leading-relaxed" id="res-contexto"></p>
+                    <!-- A classe whitespace-pre-wrap permite que os \n enviados pelo Python sejam respeitados na tela -->
+                    <p class="text-sm mt-3 text-gray-700 leading-relaxed whitespace-pre-wrap font-medium" id="res-contexto"></p>
                 </div>
             </div>
 
             <!-- Tabela de Componentes -->
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-gray-800 text-white">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nome do CFB</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tipo</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">PFs</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/2">Raciocínio CPM</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Nome do CFB</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Tipo</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">PFs</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider w-1/2">Raciocínio CPM</th>
                         </tr>
                     </thead>
                     <tbody id="tabela-corpo" class="bg-white divide-y divide-gray-200 text-sm">
-                        <!-- As linhas serão injetadas via JavaScript -->
+                        <!-- Linhas injetadas via JS -->
                     </tbody>
                 </table>
             </div>
@@ -51,74 +85,128 @@
     </div>
 
     <script>
-        document.getElementById('btnEnviar').addEventListener('click', async () => {
-            const fileInput = document.getElementById('arquivo');
-            const btn = document.getElementById('btnEnviar');
+        let ultimoResultadoJSON = null; // Armazena o resultado para exportação
+
+        function alternarCarregamento(ativo) {
+            const botoes = [document.getElementById('btnEnviarArquivo'), document.getElementById('btnEnviarTexto')];
             const status = document.getElementById('status');
             const resultados = document.getElementById('resultados');
-            
-            if (!fileInput.files[0]) {
-                alert('Selecione um arquivo de requisitos primeiro.');
-                return;
+
+            botoes.forEach(btn => {
+                btn.disabled = ativo;
+                if (ativo) btn.classList.add('opacity-50', 'cursor-not-allowed');
+                else btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+
+            if (ativo) {
+                status.classList.remove('hidden');
+                resultados.classList.add('hidden');
+            } else {
+                status.classList.add('hidden');
             }
+        }
 
-            // Prepara a interface para o carregamento
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-            status.classList.remove('hidden');
-            resultados.classList.add('hidden');
+        function renderizarResultados(data) {
+            ultimoResultadoJSON = data;
+            
+            document.getElementById('res-total-pf').textContent = data.tamanho_funcional_total_pf + ' PF';
+            document.getElementById('res-contexto').textContent = data.contexto_global_extraido;
+            
+            const tbody = document.getElementById('tabela-corpo');
+            tbody.innerHTML = '';
+            
+            if (data.componentes && data.componentes.length > 0) {
+                data.componentes.forEach(cfb => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-gray-100 transition">
+                            <td class="px-6 py-4 font-bold text-gray-900">${cfb.nome_cfb}</td>
+                            <td class="px-6 py-4"><span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800">${cfb.tipo}</span></td>
+                            <td class="px-6 py-4 font-black text-gray-800 text-lg">${cfb.pf_nesma}</td>
+                            <td class="px-6 py-4 text-xs text-gray-600">${cfb.raciocinio_cpm}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                            <span class="block font-bold mb-1">Nenhum componente funcional extraído.</span>
+                            O arquivo possui apenas requisitos não funcionais ou técnicos.
+                        </td>
+                    </tr>`;
+            }
+            
+            document.getElementById('resultados').classList.remove('hidden');
+        }
 
+        // Lidar com Upload de Arquivo
+        document.getElementById('btnEnviarArquivo').addEventListener('click', async () => {
+            const fileInput = document.getElementById('arquivo');
+            if (!fileInput.files[0]) return alert('Selecione um arquivo de requisitos primeiro.');
+
+            alternarCarregamento(true);
             const formData = new FormData();
             formData.append('arquivo', fileInput.files[0]);
 
             try {
-                // Faz a requisição ao backend FastAPI
-                const response = await fetch('/api/v1/extrair-arquivo', {
-                    method: 'POST',
-                    body: formData
-                });
-                
+                const response = await fetch('/api/v1/extrair-arquivo', { method: 'POST', body: formData });
                 const data = await response.json();
-                
                 if (!response.ok) throw new Error(data.detail || 'Erro ao comunicar com a API.');
-
-                // Preenche os cards superiores
-                document.getElementById('res-total-pf').textContent = data.tamanho_funcional_total_pf + ' PF';
-                document.getElementById('res-contexto').textContent = data.contexto_global_extraido;
-                
-                // Preenche a tabela de CFBs
-                const tbody = document.getElementById('tabela-corpo');
-                tbody.innerHTML = '';
-                
-                if (data.componentes && data.componentes.length > 0) {
-                    data.componentes.forEach(cfb => {
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 font-bold text-gray-900">${cfb.nome_cfb}</td>
-                                <td class="px-6 py-4"><span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800">${cfb.tipo}</span></td>
-                                <td class="px-6 py-4 font-bold text-gray-700">${cfb.pf_nesma}</td>
-                                <td class="px-6 py-4 text-xs text-gray-600">${cfb.raciocinio_cpm}</td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
-                                <span class="block font-bold mb-1">Nenhum componente funcional extraído.</span>
-                                O arquivo possui apenas requisitos não funcionais ou a Groq bloqueou a requisição por excesso de tokens.
-                            </td>
-                        </tr>`;
-                }
-                
-                resultados.classList.remove('hidden');
+                renderizarResultados(data);
             } catch (error) {
                 alert('Erro durante a extração: ' + error.message);
             } finally {
-                // Restaura a interface
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                status.classList.add('hidden');
+                alternarCarregamento(false);
+            }
+        });
+
+        // Lidar com Envio de Texto Bruto
+        document.getElementById('btnEnviarTexto').addEventListener('click', async () => {
+            const texto = document.getElementById('textoRequisito').value;
+            if (texto.trim().length < 20) return alert('O texto fornecido é muito curto.');
+
+            alternarCarregamento(true);
+            try {
+                const response = await fetch('/api/v1/extrair-texto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome_projeto: "Texto_Bruto", texto_requisitos: texto })
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Erro ao comunicar com a API.');
+                renderizarResultados(data);
+            } catch (error) {
+                alert('Erro durante a extração: ' + error.message);
+            } finally {
+                alternarCarregamento(false);
+            }
+        });
+
+        // Lidar com a Exportação JSON consumindo o Backend
+        document.getElementById('btnExportarJson').addEventListener('click', async () => {
+            if (!ultimoResultadoJSON) return;
+
+            try {
+                const response = await fetch('/api/v1/exportar-json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(ultimoResultadoJSON)
+                });
+                
+                if (!response.ok) throw new Error('Falha ao exportar.');
+
+                // Transforma a resposta do backend num arquivo baixável na hora
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `apf_${ultimoResultadoJSON.nome_projeto}.json`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Erro ao exportar JSON: ' + error.message);
             }
         });
     </script>
