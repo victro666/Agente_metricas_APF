@@ -1,12 +1,20 @@
 # Agente_Contagem_APF_Estimativa
 
-Este é um projeto pessoal de estudo e aplicação prática voltado à exploração de **Agentic RAG (Retrieval-Augmented Generation)**, orquestração de Large Language Models (LLMs) e validação estrita de dados estruturados.
+Este projeto se trata de uma extensão do meu TCC para estudo e aplicação prática voltado à exploração de **Agentic RAG (Retrieval-Augmented Generation)**, orquestração de Large Language Models (LLMs) e validação estrita de dados estruturados.
 
 O objetivo do sistema é atuar como um copiloto automatizado para analistas de requisitos e métricas, realizando a **leitura de documentos de especificação de software** e extraindo automaticamente os componentes funcionais segundo as diretrizes de **Análise de Pontos de Função (APF)** baseadas no manual de práticas de contagem do **IFPUG (Counting Practices Manual - CPM)**:
 
 * **Funções de Dados:** Arquivos Lógicos Internos (**ALI**) e Arquivos de Interface Externa (**AIE**).
 * **Funções Transacionais:** Entradas Externas (**EE**), Saídas Externas (**SE**) e Consultas Externas (**CE**).
 
+## Aplicação Hospedada para Testes 
+
+A aplicação está hospedada e ativa para testes no **Render**:
+
+* **Documentação Interativa (Swagger):** `https://seu-app-no-render.onrender.com/docs`
+* **Endpoint de Análise:** `POST /api/v1/extrair-arquivo`
+
+> *Nota: Por estar no plano gratuito do Render, caso o serviço esteja inativo ele pode levar cerca de 50 segundos para inicializar na primeira requisição.*
 ---
 
 ## Arquitetura Agentic Pipeline
