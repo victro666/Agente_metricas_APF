@@ -240,22 +240,39 @@ class CopilotoAPFAgent:
 
         extraidos_brutos = []
         for i, texto_bloco in enumerate(blocos):
-            try:
-                resultado = self._analisar_bloco(texto_bloco, contexto_global)
-                if resultado and resultado.componentes:
-                    for cfb in resultado.componentes:
-                        pf = PESOS_NESMA_ESTIMATIVA.get(cfb.classificacao, 0) #[cite: 2]
-                        extraidos_brutos.append(
-                            ItemContagemOutput(
-                                id_trecho=i, nome_cfb=cfb.nome_processo.strip(), tipo=cfb.classificacao,
-                                pf_nesma=pf, confianca=cfb.confianca, raciocinio_cpm=cfb.raciocinio_cpm,
-                                trecho_referencia=cfb.trecho_referencia
+            sucesso = False
+            tentativas = 0
+            
+            # Loop de retry: Tenta até 3 vezes caso caia na restrição de 429
+            while not sucesso and tentativas < 3:
+                try:
+                    resultado = self._analisar_bloco(texto_bloco, contexto_global)
+                    if resultado and resultado.componentes:
+                        for cfb in resultado.componentes:
+                            pf = PESOS_NESMA_ESTIMATIVA.get(cfb.classificacao, 0)
+                            extraidos_brutos.append(
+                                ItemContagemOutput(
+                                    id_trecho=i, nome_cfb=cfb.nome_processo.strip(), tipo=cfb.classificacao,
+                                    pf_nesma=pf, confianca=cfb.confianca, raciocinio_cpm=cfb.raciocinio_cpm,
+                                    trecho_referencia=cfb.trecho_referencia
+                                )
                             )
-                        )
-            except Exception as e:
-                # Remove a falha silenciosa para vermos o que quebrou
-                print(f"❌ ERRO CRÍTICO NO BLOCO {i}: {e}") 
-                continue
+                    sucesso = True
+                    
+                    # Pausa preventiva leve de 4 segundos entre os blocos para diluir 
+                    # a carga na API e tentar não atingir o limite de 15 RPM
+                    time.sleep(4) 
+                    
+                except Exception as e:
+                    erro_str = str(e)
+                    # Verifica se o erro foi o limite de cota da API (Resource Exhausted)
+                    if "429" in erro_str or "RESOURCE_EXHAUSTED" in erro_str:
+                        print(f"⚠️ Limite da API (429) no bloco {i}. Aguardando 50 segundos para tentar novamente (Tentativa {tentativas + 1}/3)...")
+                        time.sleep(50) # Pausa o tempo exigido pelo Google antes de tentar o MESMO bloco de novo
+                        tentativas += 1
+                    else:
+                        print(f"❌ ERRO CRÍTICO NO BLOCO {i}: {erro_str}")
+                        break # Se o erro for outro (como falha no parser), ele pula o bloco e segue a vida
 
         #mapa_unicos = {}
         #for item in extraidos_brutos:
