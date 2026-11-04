@@ -110,12 +110,40 @@ EXEMPLOS_FEW_SHOT_JSON = """
 
 # Uso do ChatPromptTemplate elimina a necessidade de <|im_start|>
 prompt_decisao = ChatPromptTemplate.from_messages([
-    ("system", "Você é um Agente Triador CFPS. REGRA DE OURO DA TRIAGEM (VIÉS POSITIVO): 1. Defina 'possui_requisito_funcional' como TRUE sempre que o texto mencionar qualquer ação de usuário, cadastro, consulta ou entidade de dados, MESMO QUE contenha requisitos não funcionais misturados. 2. Só defina como FALSE se for 100% infraestrutura (hardware, cookies, autenticação de login técnica).\n\n{format_instructions}"),
+    ("system", """Você é um Agente Triador CFPS. 
+REGRA DE OURO DA TRIAGEM:
+1. Defina 'possui_requisito_funcional' como TRUE sempre que o texto descrever funcionalidades de negócio entregues ao usuário (cadastros, consultas de domínio, relatórios, exportações, auditoria inspecionável, envio de alertas ou gestão de perfis).
+2. Defina como FALSE quando o trecho tratar EXCLUSIVAMENTE de:
+   - Diretrizes de usabilidade, acessibilidade (ISO/WCAG), cores, fontes, posicionamento de links ou layout genérico.
+   - Recomendações técnicas de arquitetura, SOA, SSL/HTTPS, cache, índices de banco de dados, paginação em lotes (10/20 registros) ou busca preguiçosa (lazy loading ao clicar em registro).
+   - SLAs de disponibilidade, tempo de resposta em segundos e recuperação de falhas.
+
+{format_instructions}"""),
     ("user", "[Contexto Global]:\n{contexto_global}\n\n[Trecho do Requisito]:\n{requisito}")
 ])
 
 prompt_extracao = ChatPromptTemplate.from_messages([
-    ("system", "Você é um Especialista Certificado em Pontos de Função (CFPS) sênior. Extraia os Componentes Funcionais Básicos válidos de negócio.\n\nDIRETRIZES CRÍTICAS:\n1. REGRA DA DUALIDADE: Sempre que identificar transação que mantém ou consulta dados, extraia também o Arquivo Lógico (ALI/AIE).\n2. PROIBIDO AGRUPAR: Cada objeto representa APENAS UM CFB.\n3. DECOMPOSIÇÃO: Verbos como 'Manter' geram 4 transações (Incluir, Alterar, Excluir, Consultar).\n4. ANTI-FRAGMENTAÇÃO: Não extraia passos de navegação isolados como PEs.\n5. REJEITE REQUISITOS NÃO FUNCIONAIS.\n\nEXEMPLOS:\n{exemplos_few_shot}\n\n[Regras CPM Consultadas]:\n{regras_cpm}\n\n{format_instructions}"),
+    ("system", """Você é um Especialista Certificado em Pontos de Função (CFPS) sênior (IFPUG CPM 4.3.1). Extraia os Componentes Funcionais Básicos (CFBs) válidos de negócio.
+
+DIRETRIZES CRÍTICAS DO CPM 4.3.1:
+1. REGRA DA DUALIDADE BIDIRECIONAL: 
+   - Se identificar uma transação (EE, SE, CE), extraia o Arquivo Lógico (ALI/AIE) associado.
+   - Se identificar um ALI através de uma ação descrita no texto (ex: "cidadãos podem registrar queixas"), você é OBRIGADO a extrair também a transação correspondente (ex: "Registrar Queixa" - EE).
+2. DIFERENCIAÇÃO ESTRITA ENTRE CE E SE:
+   - Classifique como SE (Saída Externa) APENAS se o texto explicitar cálculo matemático, totalização, estatística, geração de dado derivado (ex: "tempo de existência", "somatório") ou envio de notificação ativa externa gerada por lógica interna.
+   - Relatórios, listagens ou exportações que apenas filtram, agrupam ou ordenam dados (ex: "organizados por caso, por usuário, em ordem cronológica ou por estação de trabalho") SEM cálculo matemático são ESTRITAMENTE Consultas Externas (CE).
+3. CONSOLIDAÇÃO DE RELATÓRIOS/CONSULTAS:
+   - Variações de filtros, parâmetros de pesquisa ou critérios de ordenação sobre os mesmos dados (ex: relatório de ações por usuário vs. por estação de trabalho) constituem UM ÚNICO Processo Elementar. Não crie múltiplos CFBs para filtros diferentes da mesma consulta.
+4. DECOMPOSIÇÃO DE CRUD: Verbos como "Manter", "Configurar" ou "Gerenciar" (ou "criar, atualizar e excluir") geram transações individuais (Incluir, Alterar, Excluir, Consultar).
+5. ANTI-INFRAESTRUTURA: Jamais extraia CFBs de regras genéricas de banco de dados (como paginação ou buscar detalhes adicionais sob demanda/clique genérico), autenticação técnica (SSO/SSL) ou diretrizes de interface (ISO/WCAG).
+
+EXEMPLOS:
+{exemplos_few_shot}
+
+[Regras CPM Consultadas]:
+{regras_cpm}
+
+{format_instructions}"""),
     ("user", "[Contexto Global]:\n{contexto_global}\n\n[Trecho do Requisito]:\n{requisito}\n\nResponda ESTRITAMENTE com o objeto JSON válido.")
 ])
 
@@ -208,8 +236,8 @@ class CopilotoAPFAgent:
                 raciocinio_triagem="Fallback", possui_requisito_funcional=True, precisa_consultar_manual=False
             )
 
-        #if not decisao.possui_requisito_funcional:
-        #    return None
+        if not decisao.possui_requisito_funcional:
+            return None
 
         regras_recuperadas = "Regras padrão CPM."
         if decisao.precisa_consultar_manual and decisao.query_busca_manual:
@@ -230,9 +258,16 @@ class CopilotoAPFAgent:
 
     @staticmethod
     def _normalizar_chave_unicidade(nome: str) -> str:
-        chave = nome.lower().strip()
-        chave = re.sub(r"^(incluir|adicionar|cadastrar|criar)\b", "registrar", chave)
-        return re.sub(r"s\b", "", chave)
+        chave = str(nome).lower().strip()
+        # Padroniza verbos equivalentes de inclusão
+        chave = re.sub(r"^(adicionar|cadastrar|criar)\b", "incluir", chave)
+        # Padroniza verbos equivalentes de alteração
+        chave = re.sub(r"^(atualizar|modificar|editar)\b", "alterar", chave)
+        # Padroniza verbos equivalentes de consulta
+        chave = re.sub(r"^(visualizar|pesquisar|buscar|inspecionar)\b", "consultar", chave)
+        # Remove plural simples no final para unir 'Queixas' e 'Queixa'
+        chave = re.sub(r"s\b", "", chave)
+        return chave
 
     def processar_requisitos(self, nome_projeto: str, texto_completo: str) -> RelatorioContagemResponse:
         contexto_global = self.gerar_contexto_global(texto_completo)
@@ -280,7 +315,7 @@ class CopilotoAPFAgent:
         mapa_unicos = {}
         for item in extraidos_brutos:
             # Fazemos a normalização direto na string, evitando o erro de atributo
-            chave_nome = str(item.nome_cfb).strip().lower()
+            chave_nome = self._normalizar_chave_unicidade(item.nome_cfb)
             
             if item.tipo in ["ALI", "AIE"]:
                 # Regra IFPUG: Se é mantido (ALI) em algum lugar, sobrepõe qualquer referência (AIE)
@@ -290,8 +325,6 @@ class CopilotoAPFAgent:
                     del mapa_unicos[(chave_nome, "AIE")]
             
             mapa_unicos[(chave_nome, item.tipo)] = item
-            
-        componentes_finais = list(mapa_unicos.values())
 
         componentes_finais = list(mapa_unicos.values())
         resumo_tipos = {"EE": 0, "SE": 0, "CE": 0, "ALI": 0, "AIE": 0}
