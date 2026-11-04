@@ -140,7 +140,7 @@ class CopilotoAPFAgent:
         )
 
         nltk.download('punkt', quiet=True) 
-        self.text_splitter = NLTKTextSplitter(chunk_size=1500, chunk_overlap=200)
+        self.text_splitter = NLTKTextSplitter(chunk_size=4000, chunk_overlap=400)
 
         # Consome 0MB de RAM do Render
         self.embeddings = GoogleGenerativeAIEmbeddings(
@@ -261,14 +261,13 @@ class CopilotoAPFAgent:
                     
                     # Pausa preventiva leve de 4 segundos entre os blocos para diluir 
                     # a carga na API e tentar não atingir o limite de 15 RPM
-                    time.sleep(4) 
+                    time.sleep(3) 
                     
                 except Exception as e:
                     erro_str = str(e)
-                    # Verifica se o erro foi o limite de cota da API (Resource Exhausted)
                     if "429" in erro_str or "RESOURCE_EXHAUSTED" in erro_str:
-                        print(f"⚠️ Limite da API (429) no bloco {i}. Aguardando 50 segundos para tentar novamente (Tentativa {tentativas + 1}/3)...")
-                        time.sleep(50) # Pausa o tempo exigido pelo Google antes de tentar o MESMO bloco de novo
+                        print(f"⚠️ Limite da API (429) no bloco {i}. Aguardando 30s...")
+                        time.sleep(30)
                         tentativas += 1
                     else:
                         print(f"❌ ERRO CRÍTICO NO BLOCO {i}: {erro_str}")
