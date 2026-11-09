@@ -69,6 +69,6 @@ Diferente de pipelines de RAG convencionais que apenas injetam contexto estátic
 ## Fluxo de Funcionamento
 
 1. **Fatiamento & Contexto:** O documento é segmentado em blocos lógicos usando `NLTKTextSplitter` e o agente gera um contexto global do sistema.
-2. **Triagem Funcional:** O `gemini-3.5-flash-lite` descarta antecipadamente requisitos não funcionais (RNFs) e textos irrelevantes para poupar processamento.
+2. **Triagem Funcional:** Descarta antecipadamente requisitos não funcionais (RNFs) e textos irrelevantes para poupar processamento.
 3. **RAG Semântico:** Para trechos funcionais, o ChromaDB recupera as regras exatas do IFPUG via `gemini-embedding-2`.
 4. **Extração & Desduplicação:** O agente extrai os componentes mapeando-os estritamente para o schema Pydantic e aplica regras de consolidação
