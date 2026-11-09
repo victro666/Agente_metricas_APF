@@ -4,9 +4,7 @@ Este projeto se trata de uma extensão do meu TCC para estudo e aplicação prá
 
 O objetivo deste projeto é demonstrar, por meio de uma abordagem dentre várias, a viabilidade dos modelos de linguagem (LLMs) na execução de análises complexas de linguagem natural aplicadas à Engenharia de Software. O maior gargalo na Análise de Métricas de Software é a interpretação de documentos de requisitos despadronizados, ambíguos ou incompletos, fatores que impactam negativamente a precisão da medição e que podem impactar diretamente no faturamento. 
 
-Esta Prova de Conceito (PoC) evidencia que, por meio de uma orquestração inteligente (Agentic RAG) e prompts otimizados, é possível contornar severas restrições de infraestrutura e limites de cota de serviços gratuitos (Free Tier), entregando extrações automatizadas e consistentes sem custo de operação. 
-
-O objetivo do sistema é atuar como um copiloto automatizado para analistas de requisitos e métricas, realizando a **leitura de documentos de especificação de software** e extraindo automaticamente os componentes funcionais segundo as diretrizes de **Análise de Pontos de Função (APF)** baseadas no manual de práticas de contagem do **IFPUG (Counting Practices Manual - CPM)**:
+O objetivo do sistema é automatizar a extração e identificação de funções de dados e de transação, realizando a **leitura de documentos de especificação de software** e extraindo automaticamente os componentes funcionais segundo as diretrizes de **Análise de Pontos de Função (APF)** baseadas no manual de práticas de contagem do **IFPUG (Counting Practices Manual - CPM)**:
 
 * **Funções de Dados:** Arquivos Lógicos Internos (**ALI**) e Arquivos de Interface Externa (**AIE**).
 * **Funções Transacionais:** Entradas Externas (**EE**), Saídas Externas (**SE**) e Consultas Externas (**CE**).
@@ -16,7 +14,7 @@ O objetivo do sistema é atuar como um copiloto automatizado para analistas de r
 A aplicação está hospedada e ativa para testes no **Render**:
 
 * **Documentação Interativa (Swagger):** `https://seu-app-no-render.onrender.com/docs`
-* **Endpoint de Análise:** `POST /api/v1/extrair-arquivo`
+* **Endpoint de Análise:** `https://agente-metricas-apf.onrender.com`
 
 > *Nota: Por estar no plano gratuito do Render, caso o serviço esteja inativo ele pode levar cerca de 50 segundos para inicializar na primeira requisição.*
 ---
