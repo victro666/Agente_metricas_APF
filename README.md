@@ -1,4 +1,4 @@
-# Agente_Contagem_APF_Estimativa
+# Agente de Medição Funcionaol APF Estimativa NESMA
 
 Este projeto se trata de uma extensão do meu TCC para estudo e aplicação prática voltado à exploração de técnicas e abordagens como Agentic RAG (Retrieval-Augmented Generation), orquestração de Large Language Models (LLMs) e validação estrita de dados estruturados.
 
